@@ -1,4 +1,4 @@
-clc;
+%clc;
 clear all;
 close all;
 
@@ -82,11 +82,13 @@ function e = elem(p1, p2, type)
                'u', 0, 'q', 0, 'type', type);
 end
 
-N = 400;
+N = 40;
 dt = 2 * pi / N;
 t = linspace(0, 2 * pi - dt, N);
-x = cos(t);
-y = sin(t);
+A = 0.2;
+B = 0.1;
+x = A * cos(t);
+y = B * sin(t);
 
 
 elems = cell(N, 1);
@@ -120,11 +122,18 @@ for i = 1 : N
             G(i, j) = r1 * (1 - log(r1)) / pi;
         else
             s = elems{j}.p2 - elems{j}.p1;
-            ns = norm(s);
-            r = elems{j}.pc - elems{i}.pc;
-            nr = norm(r);
-            G(i, j) = green(elems{i}.pc, elems{j}.pc) * ns;
-            H(i, j) = dot(greenGradient(elems{i}.pc, elems{j}.pc), elems{j}.n) * ns;
+            l = norm(s);
+            s = s / l;
+            dG = @(z)green(elems{i}.pc, elems{j}.p1 + z * s);
+            dH = @(z)dot(greenGradient(elems{i}.pc, elems{j}.p1 + z * s), elems{j}.n);
+            G(i, j) = quad(dG, 0, l);
+            H(i, j) = quad(dH, 0, l);
+            %s = elems{j}.p2 - elems{j}.p1;
+            %ns = norm(s);
+            %r = elems{j}.pc - elems{i}.pc;
+            %nr = norm(r);
+            %G(i, j) = green(elems{i}.pc, elems{j}.pc) * ns;
+            %H(i, j) = dot(greenGradient(elems{i}.pc, elems{j}.pc), elems{j}.n) * ns;
         end
     end
 end

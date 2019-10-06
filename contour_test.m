@@ -1,4 +1,4 @@
-clc;
+%clc;
 clear all;
 close all;
 
@@ -37,8 +37,10 @@ end
 N = 40;
 dt = 2 * pi / N;
 t = linspace(0, 2 * pi - dt, N);
-x = cos(t);
-y = sin(t);
+A = 2;
+B = 1;
+x = A * cos(t);
+y = B * sin(t);
 
 
 elems = cell(N, 1);
@@ -66,11 +68,11 @@ for i = 1 : N
             G(i, j) = r1 * (1 - log(r1)) / pi;
         else
             s = elems{j}.p2 - elems{j}.p1;
-            ns = norm(s);
-            r = elems{j}.pc - elems{i}.pc;
-            nr = norm(r);
-            G(i, j) = green(elems{i}.pc, elems{j}.pc) * ns;
-            H(i, j) = dot(greenGradient(elems{i}.pc, elems{j}.pc), elems{j}.n) * ns;
+            l = norm(s);            
+            dG = @(s)green(elems{i}.pc, elems{j}.p1 + s * (elems{j}.p2 - elems{j}.p1) / l);
+            dH = @(s)dot(greenGradient(elems{i}.pc, elems{j}.p1 + s * (elems{j}.p2 - elems{j}.p1) / l), elems{j}.n);
+            G(i, j) = quad(dG, 0, l);
+            H(i, j) = quad(dH, 0, l);
         end
     end
 end
@@ -82,4 +84,4 @@ for i = 1 : N
     U(i) = elems{i}.u;
     Q(i) = elems{i}.q;
 end
-0.5 * U + H * U - G * Q
+max(abs(0.5 * U + H * U - G * Q))

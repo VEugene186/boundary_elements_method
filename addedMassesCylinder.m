@@ -32,8 +32,8 @@ function showElements(els)
     axis([-2, 2 -2, 2], 'square');
 end
 
-N = 20;
-A = 1.01;
+N = 80;
+A = 2;
 B = 1;
 phi = linspace(2 * pi, 0, N + 1);
 x = A * cos(phi);
@@ -73,26 +73,36 @@ for i = 1 : N
             r1 = 0.5 * norm(elems_phi1{i}.p2 - elems_phi1{i}.p1);
             G(i, j) = r1 * (1 - log(r1)) / pi;
         else
-            l = norm(elems_phi1{i}.p2 - elems_phi1{i}.p1);
-            if max_l < l
-                max_l = l;
-            end
+            s = elems_phi1{j}.p2 - elems_phi1{j}.p1;
+            l = norm(s);
+            s = s / l;
+            dG = @(z)green(elems_phi1{i}.pc, elems_phi1{j}.p1 + z * s);
+            dH = @(z)dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.p1 + z * s), elems_phi1{j}.n);
+            G(i, j) = quad(dG, 0, l);
+            H(i, j) = quad(dH, 0, l);
+            %l = norm(elems_phi1{i}.p2 - elems_phi1{i}.p1);
+            %if max_l < l
+            %    max_l = l;
+            %end
             %H(i, j) = dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.pc), elems_phi1{j}.n) * l;
             %G(i, j) = green(elems_phi1{i}.pc, elems_phi1{j}.pc) * l;
-            H(i, j) = (    dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.p1), elems_phi1{j}.n) + ...
-                       4 * dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.pc), elems_phi1{j}.n) + ...
-                           dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.p2), elems_phi1{j}.n)) * l / 6;
-            G(i, j) = (    green(elems_phi1{i}.pc, elems_phi1{j}.p1) + ...
-                       4 * green(elems_phi1{i}.pc, elems_phi1{j}.pc) + ... 
-                           green(elems_phi1{i}.pc, elems_phi1{j}.p2)) * l / 6;
+            %H(i, j) = (    dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.p1), elems_phi1{j}.n) + ...
+            %           4 * dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.pc), elems_phi1{j}.n) + ...
+            %               dot(greenGradient(elems_phi1{i}.pc, elems_phi1{j}.p2), elems_phi1{j}.n)) * l / 6;
+            %G(i, j) = (    green(elems_phi1{i}.pc, elems_phi1{j}.p1) + ...
+            %           4 * green(elems_phi1{i}.pc, elems_phi1{j}.pc) + ... 
+            %               green(elems_phi1{i}.pc, elems_phi1{j}.p2)) * l / 6;
         end
     end
 end
 max_l
-%Z = G \ H;
-dphi1 = G \ (H * phi1);
-dphi2 = G \ (H * phi2);
-dphi3 = G \ (H * phi3);
+Z = G \ H;
+dphi1 = Z * phi1;
+dphi2 = Z * phi2;
+dphi3 = Z * phi3;
+%dphi1 = G \ (H * phi1);
+%dphi2 = G \ (H * phi2);
+%dphi3 = G \ (H * phi3);
 
 lam1 = 0;
 lam2 = 0;
@@ -116,5 +126,5 @@ end
 
 fprintf(1, '%.15g | %.15g\n', lam1, pi * B^2);
 fprintf(1, '%.15g | %.15g\n', lam2, pi * A^2);
-fprintf(1, '%.15g | %.15g\n', lam3, pi * (A * A - B * B)^2 / 8.0);
+fprintf(1, '%.15g | %.15g\n', lam3, pi * (A^2 - B^2)^2 / 8.0);
 max_l
